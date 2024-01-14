@@ -21,3 +21,29 @@ export const DELETE = routeHandler(async (request, context) => {
 
   return response;
 });
+
+
+export const PATCH = routeHandler(async (request, context) => {
+  const { surveyId, questionId } = context.params;
+  const body = await request.json();
+  const response = await prisma.survey.update({
+    where: {
+      id: surveyId,
+    },
+    data: {
+      questions: {
+        update: {
+          where: {
+            id: questionId,
+          },
+          data: body,
+        },
+      },
+    },
+    include: {
+      questions: true,
+    },
+  });
+
+  return response;
+});
