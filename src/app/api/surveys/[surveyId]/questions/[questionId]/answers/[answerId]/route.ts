@@ -39,7 +39,7 @@ export const DELETE = routeHandler(async (request, context) => {
 
 export const GET = routeHandler(async (request, context) => {
     const { surveyId, questionId, answerId } = context.params;
-    const response = await prisma.questionAnswer.findUnique({
+    const response = await prisma.questionAnswer.findUniqueOrThrow({
         where: {
         id: answerId,
         },
