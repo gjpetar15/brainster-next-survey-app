@@ -2,6 +2,20 @@ import routeHandler from "@/lib/routeHandler";
 import prisma from "@/lib/prisma";
 import Question from "@/schemas/Question";
 
+export const GET = routeHandler(async (request, context) => {
+  const { surveyId } = context.params;
+  const survey = await prisma.survey.findUniqueOrThrow({
+    where: {
+      id: surveyId,
+    },
+    include: {
+      questions: true,
+    },
+  });
+
+  return survey.questions;
+});
+
 export const POST = routeHandler(async (request, context) => {
   const { surveyId } = context.params;
   const survey = await prisma.survey.findUniqueOrThrow({
