@@ -2,18 +2,18 @@ import routeHandler from "@/lib/routeHandler";
 import prisma from "@/lib/prisma";
 import Question from "@/schemas/Question";
 
-export const GET = routeHandler(async (request, context) => {
+export const GET = routeHandler(async (_, context) => {
   const { surveyId } = context.params;
-  const survey = await prisma.survey.findUniqueOrThrow({
+  const questions = await prisma.question.findMany({
     where: {
-      id: surveyId,
+      surveyId: surveyId,
     },
-    include: {
-      questions: true,
+    orderBy: {
+      position: "asc",
     },
   });
 
-  return survey.questions;
+  return questions;
 });
 
 export const POST = routeHandler(async (request, context) => {

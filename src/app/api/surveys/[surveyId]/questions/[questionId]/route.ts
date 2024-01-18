@@ -1,37 +1,42 @@
 import routeHandler from "@/lib/routeHandler";
 import prisma from "@/lib/prisma";
-import Question from "@/schemas/Question";
-
-export const DELETE = routeHandler(async (request, context) => {
-  const { surveyId, questionId } = context.params;
-  const response = await prisma.survey.update({
-    where: {
-      id: surveyId,
-    },
-    data: {
-      questions: {
-        delete: {
-          id: questionId,
-        },
-      },
-    },
-    include: {
-      questions: true,
-    },
-  });
-
-  return response;
-});
-
+import { isUndefined } from "lodash";
 
 export const PATCH = routeHandler(async (request, context) => {
   const { surveyId, questionId } = context.params;
-  const body = await request.json();
+  const data = await request.json();
 
-  const validation = await Question.safeParseAsync(body);
+  const question = await prisma.question.findFirstOrThrow({
+    where: {
+      id: questionId,
+      surveyId,
+    },
+  });
 
-  if (!validation.success) {
-    throw validation.error;
+  console.log(data.position, question.position);
+
+  if (!isUndefined(data.position) && question.position !== data.position) {
+    const [positionFrom, positionTo] = [
+      question.position,
+      data.position,
+    ].sort();
+
+    const questionsToReposition = await prisma.question.findMany({
+      where: {
+        id: questionId,
+        surveyId,
+        position: {
+          in: Array.from(
+            { length: positionTo - positionFrom + 1 },
+            (_, index) => positionFrom + index
+          ),
+        },
+      },
+    });
+
+    console.log({
+      questionsToReposition,
+    });
   }
 
   const response = await prisma.survey.update({
@@ -44,7 +49,25 @@ export const PATCH = routeHandler(async (request, context) => {
           where: {
             id: questionId,
           },
-          data: body,
+          data,
+        },
+      },
+    },
+  });
+
+  return response;
+});
+
+export const DELETE = routeHandler(async (_, context) => {
+  const { surveyId, questionId } = context.params;
+  const response = await prisma.survey.update({
+    where: {
+      id: surveyId,
+    },
+    data: {
+      questions: {
+        delete: {
+          id: questionId,
         },
       },
     },
